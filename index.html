@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Reece's 30-Day Reset</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#121212">
+    <style>
+        :root {
+            --bg: #121212;
+            --surface: #1e1e1e;
+            --primary: #4ade80;
+            --primary-dark: #22c55e;
+            --text: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border: #374151;
+            --danger: #ef4444;
+        }
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); margin: 0; padding: 0; line-height: 1.5; }
+        header { background: var(--surface); padding: 20px; text-align: center; border-bottom: 2px solid var(--primary); position: sticky; top: 0; z-index: 100; }
+        h1 { margin: 0; font-size: 24px; color: var(--primary); }
+        .container { padding: 20px; max-width: 600px; margin: 0 auto; padding-bottom: 80px; }
+        
+        .card { background: var(--surface); border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border); }
+        .card h2 { margin-top: 0; font-size: 18px; color: var(--primary); border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        
+        /* Form Elements */
+        label { display: block; margin-bottom: 15px; font-size: 16px; cursor: pointer; }
+        input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--primary); margin-right: 10px; vertical-align: middle; }
+        input[type="text"], input[type="number"], input[type="time"], select, textarea {
+            width: 100%; padding: 12px; background: var(--bg); border: 1px solid var(--border);
+            color: var(--text); border-radius: 8px; margin-top: 5px; font-size: 16px;
+        }
+        textarea { resize: vertical; min-height: 80px; }
+        
+        .flex-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        .flex-row > div { flex: 1; }
+        
+        /* Mood Buttons */
+        .mood-group { display: flex; gap: 10px; margin-top: 5px; }
+        .mood-btn {
+            flex: 1; padding: 10px; background: var(--bg); border: 1px solid var(--border);
+            border-radius: 8px; font-size: 24px; cursor: pointer; transition: 0.2s;
+        }
+        .mood-btn.active { background: var(--primary); border-color: var(--primary); }
+        
+        /* Day Selector */
+        .day-selector { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .day-selector select { width: auto; font-size: 18px; font-weight: bold; background: transparent; border: none; color: var(--primary); outline: none;}
+        
+        /* Harm Reduction Toggle */
+        #other-drugs-log { display: none; margin-top: 15px; padding: 15px; background: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--danger); border-radius: 4px; }
+        
+        /* Save Button */
+        .save-btn {
+            width: 100%; padding: 15px; background: var(--primary); color: #000;
+            border: none; border-radius: 8px; font-size: 18px; font-weight: bold;
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            max-width: calc(100% - 40px); box-shadow: 0 4px 6px rgba(0,0,0,0.3); cursor: pointer;
+        }
+        .save-btn:active { background: var(--primary-dark); }
+        
+        .score-display { text-align: center; font-size: 20px; font-weight: bold; margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>🌿 Reece's 30-Day Reset</h1>
+</header>
+
+<div class="container">
+    <div class="day-selector card">
+        <span>Select Day:</span>
+        <select id="day-select" onchange="loadDay()">
+            <script>
+                for(let i=1; i<=30; i++) document.write(`<option value="${i}">Day ${i}</option>`);
+            </script>
+        </select>
+    </div>
+
+    <div class="score-display">TODAY'S SCORE: <span id="score">0</span> / 11</div>
+
+    <div class="card">
+        <h2>✅ Daily Checklist</h2>
+        <label><input type="checkbox" class="chk" onchange="updateScore()"> 💊 Took medication as prescribed</label>
+        <label><input type="checkbox" class="chk" onchange="updateScore()"> 🌿 Tracked weed use (below)</label>
+        <label><input type="checkbox" class="chk" onchange="updateScore()"> 🏃 30+ minutes exercise</label>
+        <label><input type="checkbox" class="chk" onchange="updateScore()"> 🍲 Ate 2 proper meals</label>
+        <label><input type="checkbox" class="chk" onchange="updateScore()"> 💧 Drank 2L water</label>
+        <label><input type="checkbox" class="chk" onchange="updateScore()"> 💰 60 mins money/work</label>
+        <label><input type="checkbox" class="chk" onchange="updateScore()"> 🧠 60 mins productive/learning</label>
+        <label><input type="checkbox" class="chk" onchange="updateScore()"> ☀️ Got outside</label>
+        <label><input type="checkbox" class="chk" onchange="updateScore()"> 🚿 Showered / got dressed</label>
+        <label><input type="checkbox" class="chk" onchange="updateScore()"> 😊 Did something positive</label>
+        
+        <label style="color: var(--primary); font-weight: bold;">
+            <input type="checkbox" class="chk" id="no-other-drugs" onchange="toggleOtherDrugs(); updateScore()" checked> 
+            🚫 No non-prescribed drugs
+        </label>
+        
+        <div id="other-drugs-log">
+            <label>Substance Used (Honest Tracking):
+                <input type="text" id="other-drug-name" placeholder="What did you use?">
+            </label>
+            <label>Notes / Triggers:
+                <textarea id="other-drug-notes" placeholder="How much? Why?"></textarea>
+            </label>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🌿 Weed Tracker</h2>
+        <div class="flex-row">
+            <div>
+                <label>Times used:<input type="number" id="weed-times"></label>
+            </div>
+            <div>
+                <label>Amount:<input type="text" id="weed-amount" placeholder="e.g. 2g / 3 joints"></label>
+            </div>
+        </div>
+        <div class="flex-row">
+            <div>
+                <label>First use:<input type="time" id="weed-first"></label>
+            </div>
+            <div>
+                <label>Last use:<input type="time" id="weed-last"></label>
+            </div>
+        </div>
+        <label>Reason:
+            <select id="weed-reason">
+                <option value="">Select...</option>
+                <option value="boredom">Boredom</option>
+                <option value="stress">Stress</option>
+                <option value="social">Social</option>
+                <option value="relaxation">Relaxation</option>
+                <option value="other">Other</option>
+            </select>
+        </label>
+        <label>How I felt afterwards:</label>
+        <div class="mood-group">
+            <button type="button" class="mood-btn" onclick="setMood('👍')">👍</button>
+            <button type="button" class="mood-btn" onclick="setMood('😐')">😐</button>
+            <button type="button" class="mood-btn" onclick="setMood('👎')">👎</button>
+        </div>
+        <input type="hidden" id="weed-mood">
+    </div>
+
+    <div class="card">
+        <h2>📓 Journal</h2>
+        <label>💰 Money earned: <input type="text" id="j-money"></label>
+        <label>🏋️ Exercise details: <input type="text" id="j-exercise"></label>
+        <label>🧠 What I learned: <input type="text" id="j-learned"></label>
+        <label>😊 Best thing today: <input type="text" id="j-best"></label>
+        <label>⚠️ Biggest trigger/challenge: <input type="text" id="j-trigger"></label>
+        <label>🎯 Tomorrow's priority: <input type="text" id="j-tomorrow"></label>
+    </div>
+</div>
+
+<button class="save-btn" onclick="saveDay()">Save Today's Entry</button>
+
+<script>
+    function updateScore() {
+        const checkboxes = document.querySelectorAll('.chk');
+        let score = 0;
+        checkboxes.forEach(chk => { if(chk.checked) score++; });
+        document.getElementById('score').innerText = score;
+    }
+
+    function toggleOtherDrugs() {
+        const isClean = document.getElementById('no-other-drugs').checked;
+        document.getElementById('other-drugs-log').style.display = isClean ? 'none' : 'block';
+    }
+
+    function setMood(mood) {
+        document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        document.getElementById('weed-mood').value = mood;
+    }
+
+    function getDayData() {
+        return {
+            checks: Array.from(document.querySelectorAll('.chk')).map(c => c.checked),
+            otherDrugName: document.getElementById('other-drug-name').value,
+            otherDrugNotes: document.getElementById('other-drug-notes').value,
+            weedTimes: document.getElementById('weed-times').value,
+            weedAmount: document.getElementById('weed-amount').value,
+            weedFirst: document.getElementById('weed-first').value,
+            weedLast: document.getElementById('weed-last').value,
+            weedReason: document.getElementById('weed-reason').value,
+            weedMood: document.getElementById('weed-mood').value,
+            jMoney: document.getElementById('j-money').value,
+            jExercise: document.getElementById('j-exercise').value,
+            jLearned: document.getElementById('j-learned').value,
+            jBest: document.getElementById('j-best').value,
+            jTrigger: document.getElementById('j-trigger').value,
+            jTomorrow: document.getElementById('j-tomorrow').value
+        };
+    }
+
+    function saveDay() {
+        const day = document.getElementById('day-select').value;
+        const data = getDayData();
+        localStorage.setItem(`reece-reset-day-${day}`, JSON.stringify(data));
+        
+        const btn = document.querySelector('.save-btn');
+        btn.innerText = "Saved!";
+        btn.style.background = "#fff";
+        setTimeout(() => { btn.innerText = "Save Today's Entry"; btn.style.background = "var(--primary)"; }, 2000);
+    }
+
+    function loadDay() {
+        const day = document.getElementById('day-select').value;
+        const saved = JSON.parse(localStorage.getItem(`reece-reset-day-${day}`));
+        
+        // Reset defaults
+        document.querySelectorAll('.chk').forEach(c => c.checked = false);
+        document.getElementById('no-other-drugs').checked = true;
+        document.querySelectorAll('input[type="text"], input[type="number"], input[type="time"], textarea, select').forEach(i => i.value = '');
+        document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('active'));
+        
+        if(saved) {
+            const chks = document.querySelectorAll('.chk');
+            saved.checks.forEach((val, i) => { if(chks[i]) chks[i].checked = val; });
+            
+            document.getElementById('other-drug-name').value = saved.otherDrugName || '';
+            document.getElementById('other-drug-notes').value = saved.otherDrugNotes || '';
+            document.getElementById('weed-times').value = saved.weedTimes || '';
+            document.getElementById('weed-amount').value = saved.weedAmount || '';
+            document.getElementById('weed-first').value = saved.weedFirst || '';
+            document.getElementById('weed-last').value = saved.weedLast || '';
+            document.getElementById('weed-reason').value = saved.weedReason || '';
+            document.getElementById('weed-mood').value = saved.weedMood || '';
+            
+            if(saved.weedMood) {
+                document.querySelectorAll('.mood-btn').forEach(btn => {
+                    if(btn.innerText === saved.weedMood) btn.classList.add('active');
+                });
+            }
+
+            document.getElementById('j-money').value = saved.jMoney || '';
+            document.getElementById('j-exercise').value = saved.jExercise || '';
+            document.getElementById('j-learned').value = saved.jLearned || '';
+            document.getElementById('j-best').value = saved.jBest || '';
+            document.getElementById('j-trigger').value = saved.jTrigger || '';
+            document.getElementById('j-tomorrow').value = saved.jTomorrow || '';
+        }
+        
+        updateScore();
+        toggleOtherDrugs();
+    }
+
+    // Register Service Worker for PWA installation
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').catch(err => console.log('SW setup failed', err));
+    }
+
+    // Initialize
+    loadDay();
+</script>
+</body>
+</html>
